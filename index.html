@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blood Quest – Unit 3C</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef3fb;--ink:#1d2340;--muted:#5d6788;--line:#dfe5f2;--accent:#c8264a;--accent2:#5b3fa8;}
+*{box-sizing:border-box}
+body{margin:0;font-family:Nunito,system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+button{font-family:inherit}
+.app{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+
+/* ---------- Sidebar agenda ---------- */
+aside{background:#f7f9fe;border-right:1px solid var(--line);padding:18px 14px}
+aside h3{font-family:Fredoka;font-size:20px;margin:4px 6px 14px}
+.round{display:block;width:100%;text-align:left;background:#fff;border:2px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:10px;cursor:pointer;transition:.15s}
+.round:hover{border-color:#9cc4f2}
+.round.active{background:#dcefff;border-color:#7fb1ee}
+.round b{display:block;font-family:Fredoka;font-weight:600;font-size:16px}
+.round small{color:var(--muted);font-weight:700;font-size:12px}
+
+/* ---------- Header ---------- */
+.top{display:flex;align-items:center;gap:16px;padding:16px 24px;flex-wrap:wrap}
+.logo{font-size:44px}
+.cloud{background:#fff;border:3px solid #8fb8ef;border-radius:40px;padding:8px 32px;text-align:center;box-shadow:0 4px 0 #cfe0f8}
+.cloud h1{font-family:Fredoka;font-size:30px;margin:0;line-height:1.2}
+.pill{display:inline-block;background:#ffe3ec;color:#a3264c;border-radius:20px;padding:2px 12px;font-size:13px;font-weight:800;margin-top:4px}
+.tools{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.tool{border:none;background:#fff;border-radius:12px;padding:9px 14px;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 2px 6px rgba(30,40,90,.12)}
+.tool:hover{background:#f0f4ff}
+
+/* ---------- Main area ---------- */
+main section{padding:0 24px 30px}
+h2{font-family:Fredoka;font-size:30px;margin:6px 0 4px}
+.intro{color:var(--muted);font-size:18px;margin:0 0 18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px}
+.card{height:130px;border:none;border-radius:18px;cursor:pointer;font-family:Fredoka;color:#1d2340;box-shadow:0 5px 0 rgba(0,0,0,.08);transition:transform .15s,opacity .2s;position:relative}
+.card:hover{transform:translateY(-4px)}
+.card .n{font-size:54px;font-weight:700;display:block;line-height:1}
+.card .p{font-size:16px;font-weight:500}
+.card.done{opacity:.35}
+.card.done::after{content:"✓";position:absolute;top:8px;right:14px;font-size:28px}
+.row{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap}
+.btn{border:none;border-radius:12px;padding:12px 20px;font-weight:800;font-size:16px;cursor:pointer}
+.btn.primary{background:var(--accent2);color:#fff}
+.btn.red{background:var(--accent);color:#fff}
+.btn.ghost{background:#fff;color:var(--ink);box-shadow:0 2px 6px rgba(30,40,90,.12)}
+
+/* ---------- Reading passage ---------- */
+.passage{background:#fdf0ec;border-radius:18px;padding:26px 30px;max-width:900px;font-size:20px;line-height:1.85;box-shadow:0 5px 0 #f1d9d2}
+.passage h4{font-family:Georgia,serif;font-style:italic;font-weight:400;font-size:24px;margin:18px 0 4px}
+.passage h4:first-child{margin-top:0}
+.gap{border:none;border-bottom:3px dashed var(--accent);background:#fff;border-radius:6px;padding:0 10px;font:inherit;color:var(--accent2);font-weight:800;cursor:pointer;min-width:110px}
+.gap.shown{background:#ffe0e6;color:var(--accent);border-bottom-style:solid}
+
+/* ---------- Question pop-up ---------- */
+.overlay{position:fixed;inset:0;background:rgba(20,25,50,.55);display:none;align-items:center;justify-content:center;z-index:40;padding:16px}
+.overlay.open{display:flex}
+.modal{width:min(780px,100%);background:#fff;border-radius:24px;padding:28px;max-height:92vh;overflow:auto}
+.qtag{display:inline-block;background:#e8e1fb;color:var(--accent2);border-radius:20px;padding:3px 14px;font-weight:800}
+.qtext{font-family:Fredoka;font-size:28px;font-weight:500;margin:14px 0 18px;line-height:1.3}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opt{padding:14px;font-size:19px;font-weight:700;border:2px solid var(--line);border-radius:14px;background:#f7f9fe;cursor:pointer;text-align:left}
+.opt.right{background:#d6f5df;border-color:#3aa35b}
+.opt.wrong{background:#fde0e0;border-color:#d33}
+.answer{display:none;background:#fff7d6;border-left:6px solid #f2b705;padding:16px 18px;border-radius:12px;margin-top:18px;font-size:21px;line-height:1.5}
+.answer.show{display:block}
+.answer b{color:#8a6100}
+
+/* ---------- Floating panels (wheel, timer, scores) ---------- */
+.panel{position:fixed;right:20px;top:96px;width:330px;background:#fff;border-radius:20px;box-shadow:0 12px 40px rgba(20,30,80,.25);padding:16px;display:none;z-index:60}
+.panel.open{display:block}
+.panel header{display:flex;align-items:center;justify-content:space-between;font-family:Fredoka;font-size:19px;font-weight:600;margin-bottom:10px}
+.x{border:1px solid var(--line);background:#fff;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:16px}
+.wheel-wrap{position:relative;width:260px;margin:6px auto 0}
+.pointer{position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:26px solid var(--accent);z-index:2;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
+canvas{display:block}
+.result{font-family:Fredoka;font-size:20px;text-align:center;min-height:62px;margin-top:6px}
+.result span{font-size:46px;font-weight:700;color:var(--accent2)}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin:10px 0}
+.chip{width:32px;height:32px;border-radius:8px;border:2px solid var(--line);background:#fff;font-weight:800;cursor:pointer}
+.chip.on{background:var(--accent2);border-color:var(--accent2);color:#fff}
+.small{font-size:13px;color:var(--muted);font-weight:700}
+.minirow{display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:center;margin-top:8px}
+.minibtn{border:none;background:#eef2fb;border-radius:9px;padding:7px 11px;font-weight:800;cursor:pointer}
+.clock{font-family:Fredoka;font-size:64px;text-align:center;font-weight:700}
+.clock.end{color:var(--accent);animation:flash .5s 6}
+@keyframes flash{50%{opacity:.2}}
+.team{display:flex;align-items:center;gap:8px;margin:8px 0}
+.team input{flex:1;border:2px solid var(--line);border-radius:9px;padding:7px;font-weight:700;font-size:15px;min-width:0}
+.team .pts{font-family:Fredoka;font-size:30px;width:50px;text-align:center}
+
+@media(max-width:820px){
+  .app{grid-template-columns:1fr}
+  aside{display:flex;gap:8px;overflow-x:auto;border-right:none;border-bottom:1px solid var(--line)}
+  aside h3{display:none}
+  .round{min-width:170px;margin:0}
+  .opts{grid-template-columns:1fr}
+  .panel{left:12px;right:12px;width:auto}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside id="agenda"><h3>📋 Lesson Agenda</h3></aside>
+
+  <main>
+    <div class="top">
+      <div class="logo">🫀</div>
+      <div class="cloud">
+        <h1>Who Discovered How Blood Moves?</h1>
+        <span class="pill">Unit 3C · Coursebook p.61–62</span>
+      </div>
+      <div class="tools">
+        <button class="tool" onclick="togglePanel('wheelPanel')">🎡 Wheel</button>
+        <button class="tool" onclick="togglePanel('timerPanel')">⏱ Timer</button>
+        <button class="tool" onclick="togglePanel('scorePanel')">🏆 Scores</button>
+        <button class="tool" onclick="toggleFull()">⛶ Full Screen</button>
+      </div>
+    </div>
+    <section id="stage"></section>
+  </main>
+</div>
+
+<!-- Question pop-up -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeQ()">
+  <div class="modal">
+    <span class="qtag" id="qtag"></span>
+    <div class="qtext" id="qtext"></div>
+    <div class="opts" id="opts"></div>
+    <div class="answer" id="answer"></div>
+    <div class="row">
+      <button class="btn ghost" onclick="openPanel('wheelPanel')">🎡 Pick a student</button>
+      <button class="btn red" onclick="showAnswer()">👀 Show Answer</button>
+      <button class="btn primary" onclick="closeQ()">Done ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- Spinner wheel -->
+<div class="panel" id="wheelPanel">
+  <header>🎡 Participation Picker <button class="x" onclick="togglePanel('wheelPanel')">✕</button></header>
+  <div class="wheel-wrap"><div class="pointer"></div><canvas id="wheel" width="260" height="260"></canvas></div>
+  <div class="result" id="wheelResult">Ready to spin!</div>
+  <div class="minirow">
+    <button class="btn primary" id="spinBtn" onclick="spin()">SPIN</button>
+    <button class="minibtn" onclick="resetLetters()">↺ Reset</button>
+  </div>
+  <div class="small" style="margin-top:12px">Letters on the wheel (tap to switch on/off):</div>
+  <div class="chips" id="chips"></div>
+  <label class="small"><input type="checkbox" id="removeAfter" checked> Remove a letter once it's picked</label>
+</div>
+
+<!-- Timer -->
+<div class="panel" id="timerPanel">
+  <header>⏱ Timer <button class="x" onclick="togglePanel('timerPanel')">✕</button></header>
+  <div class="clock" id="clock">0:30</div>
+  <div class="minirow">
+    <button class="minibtn" onclick="setTimer(30)">30 s</button>
+    <button class="minibtn" onclick="setTimer(60)">1 min</button>
+    <button class="minibtn" onclick="setTimer(120)">2 min</button>
+    <button class="minibtn" onclick="setTimer(300)">5 min</button>
+  </div>
+  <div class="minirow">
+    <button class="btn primary" onclick="startTimer()">▶ Start</button>
+    <button class="btn ghost" onclick="stopTimer()">⏸ Stop</button>
+  </div>
+</div>
+
+<!-- Scores -->
+<div class="panel" id="scorePanel">
+  <header>🏆 Team Scores <button class="x" onclick="togglePanel('scorePanel')">✕</button></header>
+  <div id="teams"></div>
+  <div class="minirow"><button class="minibtn" onclick="resetScores()">↺ Reset scores</button></div>
+</div>
+
+<script>
+/* =========================================================
+   ✏️  EDIT YOUR CONTENT HERE
+   You can change any text between the quote marks "like this".
+   ========================================================= */
+
+// The missing words in the reading text (numbers match the coursebook gaps)
+const GAPS = {
+  1: "made of",
+  2: "is carried",
+  3: "is pumped",
+  4: "is sent",
+  5: "is given",
+  6: "was discovered",
+  7: "was",
+  8: "believed"
+};
+
+// The reading text. {1}, {2}... show where each gap goes.
+const PASSAGE = [
+  { heading: "What is blood?",
+    text: "Blood is {1} plasma and three different types of blood cells. Plasma is a mixture of 90% water and it gives the body energy. Red blood cells carry oxygen around the body. White blood cells clean the blood and fight viruses. Platelets help stop bleeding." },
+  { heading: "How does blood move through the body?",
+    text: "Blood {2} through the body by blood vessels: arteries and veins. When the heart beats, it pumps blood through the blood vessels. Blood {3} into the heart and then it {4} to the lungs to get oxygen. The oxygenated blood is sent back to the heart and then it is pumped through the arteries. The blood sends oxygen to cells around the body and then it is carried back to the heart through the veins. When it arrives at the heart it {5} more oxygen from the lungs and then repeats the cycle." },
+  { heading: "Who discovered how blood moves around the body?",
+    text: "In the past, it was believed that William Harvey discovered how blood moves around the body. In the 1600s, he wrote a book to explain that blood circulates from the heart to the lungs, and from the heart to the body. Actually, it {6} by Ibn al-Nafis approximately 380 years earlier. He explained that blood moves from the right side of the heart to the lungs and back to the left side of the heart in a cycle and he described how blood moves around the body. Before this, it {7} wrongly {8} that blood travels directly from the left to the right side of the heart." }
+];
+
+// Rounds of question cards.
+//  • Multiple choice: give "options" and "correct" (0 = first option, 1 = second...)
+//  • Open question: leave out "options" – just give the "answer"
+const ROUNDS = [
+  { icon:"📖", title:"Read & Fill the Gaps", meta:"10 min · Individual", type:"reading",
+    intro:"Listen and read. Click a numbered gap to reveal the missing words." },
+
+  { icon:"❓", title:"Quick Quiz", meta:"10 min · Teams", type:"cards",
+    intro:"Pick a number. Read the question and choose the right answer.",
+    questions:[
+      { q:"What is plasma mostly made of?", options:["Water","Red blood cells","Oxygen","Platelets"], correct:0,
+        answer:"Plasma is a mixture of <b>90% water</b>." },
+      { q:"Which blood cells carry oxygen around the body?", options:["White blood cells","Red blood cells","Platelets","Plasma"], correct:1,
+        answer:"<b>Red blood cells</b> carry oxygen around the body." },
+      { q:"What is the job of platelets?", options:["They fight viruses","They give the body energy","They help stop bleeding","They carry oxygen"], correct:2,
+        answer:"Platelets <b>help stop bleeding</b>." },
+      { q:"What do white blood cells do?", options:["Carry oxygen","Clean the blood and fight viruses","Pump the blood","Make plasma"], correct:1,
+        answer:"White blood cells <b>clean the blood and fight viruses</b>." },
+      { q:"What are the two kinds of blood vessels?", options:["Heart and lungs","Plasma and platelets","Arteries and veins","Cells and water"], correct:2,
+        answer:"The two kinds of blood vessels are <b>arteries and veins</b>." },
+      { q:"Where does blood go to get oxygen?", options:["The brain","The stomach","The lungs","The veins"], correct:2,
+        answer:"Blood goes to <b>the lungs</b> to get oxygen." },
+      { q:"Who wrote a book about blood circulation in the 1600s?", options:["Ibn al-Nafis","William Harvey","A doctor from Sri Lanka","An Emirati woman"], correct:1,
+        answer:"<b>William Harvey</b> wrote the book in the 1600s." },
+      { q:"Who really described how blood moves around the body first?", options:["William Harvey","Ibn al-Nafis","The doctor in the interview","Nobody knows"], correct:1,
+        answer:"<b>Ibn al-Nafis</b> – about 380 years before William Harvey." },
+      { q:"True or false? Blood comes back to the heart through the veins.", options:["True","False"], correct:0,
+        answer:"<b>True.</b> Blood is carried back to the heart through the veins." },
+      { q:"True or false? People used to think blood travelled directly from the left to the right side of the heart.", options:["True","False"], correct:0,
+        answer:"<b>True.</b> This was the wrong idea before Ibn al-Nafis." }
+    ]},
+
+  { icon:"🤔", title:"Think Deeper", meta:"10 min · Pair Work", type:"cards",
+    intro:"Discuss with your partner, then share your idea. There can be more than one good answer!",
+    questions:[
+      { q:"Explain the journey of blood in your own words. Start at the heart.",
+        answer:"Heart → <b>lungs</b> (to get oxygen) → back to the heart → pumped through the <b>arteries</b> to the body → oxygen goes to the cells → back to the heart through the <b>veins</b> → and the cycle repeats." },
+      { q:"Why does the writer use the word “Actually” before talking about Ibn al-Nafis?",
+        answer:"To <b>correct a wrong idea</b>. Many people believed Harvey discovered it first, but really Ibn al-Nafis did." },
+      { q:"Why do you think so many people believed William Harvey made the discovery?",
+        answer:"Possible answers: his <b>book was famous</b> in Europe; Ibn al-Nafis's work was <b>not known or translated</b> there for a long time." },
+      { q:"What could happen to a person who doesn't have enough platelets?",
+        answer:"Their <b>bleeding would not stop easily</b>, even from a small cut." },
+      { q:"Why does blood need to go back to the lungs again and again?",
+        answer:"The body's cells <b>use up the oxygen</b>, so the blood needs to collect more oxygen from the lungs." },
+      { q:"Why does the text use the passive voice so much (e.g. “Blood is carried…”)?",
+        answer:"Because the text wants to <b>focus on the blood and the action</b>, not on who or what does the action." }
+    ]},
+
+  { icon:"🔁", title:"Passive Power", meta:"10 min · Teams", type:"cards",
+    intro:"Change the sentence into the passive voice. Remember: subject + be + past participle.",
+    questions:[
+      { q:"Complete the rule: We use ______ to say who or what does the action.",
+        answer:"We use <b>by</b>. Example: Blood is carried <b>by</b> blood vessels." },
+      { q:"What is the past participle of <u>give</u>, <u>send</u> and <u>carry</u>?",
+        answer:"give → <b>given</b> · send → <b>sent</b> · carry → <b>carried</b>" },
+      { q:"Make it passive: <i>The doctor chose a volunteer.</i>",
+        answer:"<b>A volunteer was chosen by the doctor.</b>" },
+      { q:"Make it passive: <i>An Emirati woman wrote the book.</i>",
+        answer:"<b>The book was written by an Emirati woman.</b>" },
+      { q:"Make it passive: <i>The teacher asks the students many questions.</i>",
+        answer:"<b>The students are asked many questions by the teacher.</b>" },
+      { q:"Make it passive: <i>People made this bag in Sri Lanka.</i>",
+        answer:"<b>This bag was made in Sri Lanka.</b> (We don't need “by people”.)" },
+      { q:"Make it passive: <i>People make this tea in a factory in Jebel Ali.</i>",
+        answer:"<b>This tea is made in a factory in Jebel Ali.</b>" },
+      { q:"Active or passive? <i>The heart pumps blood through the blood vessels.</i>",
+        options:["Active","Passive"], correct:0,
+        answer:"<b>Active.</b> Passive would be: Blood is pumped through the blood vessels by the heart." }
+    ]}
+];
+
+// Team names for the scoreboard
+const TEAM_NAMES = ["Team Red Cells", "Team Platelets"];
+
+/* =========================================================
+   ⚙️  The code below makes everything work – no need to edit
+   ========================================================= */
+const COLORS = ["#f4b6dc","#9cc4f2","#f6dd97","#c9b6ee","#9fdcd6","#f7c1a6"];
+let current = 0, openQ = null;
+const done = ROUNDS.map(() => new Set());
+
+function renderAgenda(){
+  const a = document.getElementById("agenda");
+  a.querySelectorAll(".round").forEach(b => b.remove());
+  ROUNDS.forEach((r,i) => {
+    const b = document.createElement("button");
+    b.className = "round" + (i===current ? " active" : "");
+    b.innerHTML = `<b>${i+1}. ${r.icon} ${r.title}</b><small>${r.meta}</small>`;
+    b.onclick = () => { current = i; renderAgenda(); renderStage(); };
+    a.appendChild(b);
+  });
+}
+
+function renderStage(){
+  const r = ROUNDS[current], s = document.getElementById("stage");
+  let html = `<h2>${r.icon} ${r.title}</h2><p class="intro">${r.intro}</p>`;
+  if (r.type === "reading"){
+    html += `<div class="passage">` + PASSAGE.map(p =>
+      `<h4>${p.heading}</h4><div>${p.text.replace(/\{(\d+)\}/g,
+        (m,n) => `<button class="gap" data-n="${n}" onclick="toggleGap(this)">(${n}) ______</button>`)}</div>`
+    ).join("") + `</div>
+    <div class="row">
+      <button class="btn ghost" onclick="openPanel('wheelPanel')">🎡 Pick a reader</button>
+      <button class="btn ghost" onclick="allGaps(false)">🙈 Hide all</button>
+      <button class="btn red" onclick="allGaps(true)">👀 Show all answers</button>
+    </div>`;
+  } else {
+    html += `<div class="grid">` + r.questions.map((q,i) =>
+      `<button class="card ${done[current].has(i)?"done":""}" style="background:${COLORS[i%COLORS.length]}" onclick="openQuestion(${i})">
+        <span class="n">${i+1}</span><span class="p">Pick me!</span></button>`).join("") +
+      `</div><div class="row"><button class="btn primary" onclick="resetCards()">↻ Reset cards</button></div>`;
+  }
+  s.innerHTML = html;
+}
+
+function toggleGap(el){
+  const n = el.dataset.n;
+  if (el.classList.toggle("shown")) el.textContent = `(${n}) ${GAPS[n]}`;
+  else el.textContent = `(${n}) ______`;
+}
+function allGaps(show){
+  document.querySelectorAll(".gap").forEach(el => {
+    if (el.classList.contains("shown") !== show) toggleGap(el);
+  });
+}
+
+function openQuestion(i){
+  const q = ROUNDS[current].questions[i];
+  openQ = i;
+  document.getElementById("qtag").textContent = `${ROUNDS[current].title} · Question ${i+1}`;
+  document.getElementById("qtext").innerHTML = q.q;
+  const o = document.getElementById("opts");
+  o.innerHTML = "";
+  (q.options || []).forEach((t,k) => {
+    const b = document.createElement("button");
+    b.className = "opt";
+    b.innerHTML = `${String.fromCharCode(65+k)}) ${t}`;
+    b.onclick = () => b.classList.add(k===q.correct ? "right" : "wrong");
+    o.appendChild(b);
+  });
+  const a = document.getElementById("answer");
+  a.innerHTML = "✅ " + q.answer;
+  a.classList.remove("show");
+  document.getElementById("overlay").classList.add("open");
+}
+function showAnswer(){
+  document.getElementById("answer").classList.add("show");
+  const q = ROUNDS[current].questions[openQ];
+  if (q.options) document.querySelectorAll(".opt")[q.correct].classList.add("right");
+}
+function closeQ(){
+  if (openQ !== null){ done[current].add(openQ); openQ = null; }
+  document.getElementById("overlay").classList.remove("open");
+  renderStage();
+}
+function resetCards(){ done[current].clear(); renderStage(); }
+
+/* ---------- Panels ---------- */
+function togglePanel(id){ document.getElementById(id).classList.toggle("open"); }
+function openPanel(id){ document.getElementById(id).classList.add("open"); }
+function toggleFull(){
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
+  else document.exitFullscreen();
+}
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeQ(); });
+
+/* ---------- Spinner wheel ---------- */
+const ALL = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+let active = new Set(ALL), angle = 0, spinning = false;
+const cv = document.getElementById("wheel"), ctx = cv.getContext("2d");
+
+function letters(){ return ALL.filter(l => active.has(l)); }
+
+function drawWheel(){
+  const L = letters(), R = 128, c = 130;
+  ctx.clearRect(0,0,260,260);
+  if (!L.length){
+    ctx.fillStyle="#eef2fb"; ctx.beginPath(); ctx.arc(c,c,R,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle="#5d6788"; ctx.font="700 16px Nunito"; ctx.textAlign="center";
+    ctx.fillText("Switch some letters on", c, c+5); return;
+  }
+  const s = Math.PI*2 / L.length;
+  ctx.save(); ctx.translate(c,c); ctx.rotate(angle);
+  L.forEach((l,i) => {
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0,R,i*s,(i+1)*s); ctx.closePath();
+    ctx.fillStyle = COLORS[i%COLORS.length]; ctx.fill();
+    ctx.strokeStyle="#fff"; ctx.lineWidth=2; ctx.stroke();
+    ctx.save(); ctx.rotate(i*s + s/2);
+    ctx.fillStyle="#1d2340"; ctx.textAlign="right"; ctx.textBaseline="middle";
+    ctx.font = `700 ${L.length>16?15:20}px Fredoka`;
+    ctx.fillText(l, R-10, 0); ctx.restore();
+  });
+  ctx.restore();
+  ctx.beginPath(); ctx.arc(c,c,22,0,Math.PI*2); ctx.fillStyle="#fff"; ctx.fill();
+  ctx.strokeStyle="#dfe5f2"; ctx.lineWidth=3; ctx.stroke();
+}
+
+function renderChips(){
+  const box = document.getElementById("chips");
+  box.innerHTML = "";
+  ALL.forEach(l => {
+    const b = document.createElement("button");
+    b.className = "chip" + (active.has(l) ? " on" : "");
+    b.textContent = l;
+    b.onclick = () => { if (spinning) return; active.has(l) ? active.delete(l) : active.add(l); renderChips(); drawWheel(); };
+    box.appendChild(b);
+  });
+}
+
+function spin(){
+  const L = letters();
+  if (spinning || !L.length) return;
+  spinning = true;
+  document.getElementById("wheelResult").textContent = "Spinning…";
+  const start = angle, target = angle + Math.PI*2*(5 + Math.random()*3), dur = 4000, t0 = performance.now();
+  function frame(t){
+    const p = Math.min((t - t0)/dur, 1);
+    angle = start + (target - start) * (1 - Math.pow(1-p, 3));
+    drawWheel();
+    if (p < 1) return requestAnimationFrame(frame);
+    const s = Math.PI*2 / L.length;
+    const rel = ((-Math.PI/2 - angle) % (Math.PI*2) + Math.PI*2) % (Math.PI*2);
+    const pick = L[Math.floor(rel / s)];
+    document.getElementById("wheelResult").innerHTML = `Names starting with <span>${pick}</span>`;
+    spinning = false;
+    if (document.getElementById("removeAfter").checked){
+      setTimeout(() => { active.delete(pick); renderChips(); drawWheel(); }, 1500);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+function resetLetters(){
+  if (spinning) return;
+  active = new Set(ALL); renderChips(); drawWheel();
+  document.getElementById("wheelResult").textContent = "Ready to spin!";
+}
+
+/* ---------- Timer ---------- */
+let secs = 30, tick = null;
+function showClock(){
+  const el = document.getElementById("clock");
+  el.textContent = Math.floor(secs/60) + ":" + String(secs%60).padStart(2,"0");
+}
+function setTimer(n){ stopTimer(); secs = n; document.getElementById("clock").classList.remove("end"); showClock(); }
+function startTimer(){
+  if (tick || secs <= 0) return;
+  document.getElementById("clock").classList.remove("end");
+  tick = setInterval(() => {
+    secs--; showClock();
+    if (secs <= 0){ stopTimer(); document.getElementById("clock").classList.add("end"); }
+  }, 1000);
+}
+function stopTimer(){ clearInterval(tick); tick = null; }
+
+/* ---------- Scores ---------- */
+const scores = TEAM_NAMES.map(() => 0);
+function renderTeams(){
+  document.getElementById("teams").innerHTML = TEAM_NAMES.map((n,i) =>
+    `<div class="team"><input value="${n}" onchange="TEAM_NAMES[${i}]=this.value">
+      <button class="minibtn" onclick="score(${i},-1)">−</button>
+      <div class="pts">${scores[i]}</div>
+      <button class="minibtn" onclick="score(${i},1)">+</button></div>`).join("");
+}
+function score(i,d){ scores[i] = Math.max(0, scores[i]+d); renderTeams(); }
+function resetScores(){ scores.fill(0); renderTeams(); }
+
+/* ---------- Start ---------- */
+renderAgenda(); renderStage(); renderChips(); renderTeams(); showClock();
+document.fonts && document.fonts.ready.then(drawWheel);
+drawWheel();
+</script>
+</body>
+</html>
